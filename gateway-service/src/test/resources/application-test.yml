@@ -1,0 +1,6 @@
+jwt:
+  secret: "SakilaSecretKeyForJWTAuthSystemMicroservicesProfessionalCode2026"
+
+eureka:
+  client:
+    enabled: false

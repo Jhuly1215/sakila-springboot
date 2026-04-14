@@ -1,0 +1,57 @@
+### 1. Register a new user (Staff)
+# Create a user with a BCrypt encrypted password
+POST http://localhost:8080/auth/register
+Content-Type: application/json
+
+{
+    "firstName": "John",
+    "lastName": "Doe",
+    "username": "johndoe",
+    "password": "password123",
+    "email": "john.doe@sakila.com",
+    "active": true
+}
+
+### 2. Login to get JWT
+# Save the response token to use in the headers below
+POST http://localhost:8080/auth/login
+Content-Type: application/json
+
+{
+    "username": "johndoe",
+    "password": "password123"
+}
+
+### 3. Customer Service (REST) - GET All
+GET http://localhost:8080/customer/all
+Authorization: Bearer {{token}}
+
+### 4. Business Service (GraphQL) - Query Stores
+# Use a JSON body for the GraphQL query
+POST http://localhost:8080/business/graphql
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "query": "{ allStores { id managerStaffId addressId } }"
+}
+
+### 5. Inventory Service (SOAP) - Get Film
+# Call the SOAP endpoint with XML payload
+POST http://localhost:8080/inventory/ws
+Authorization: Bearer {{token}}
+Content-Type: text/xml
+
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soap="http://sakila.com/soap">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <soap:getFilmRequest>
+         <soap:id>1</soap:id>
+      </soap:getFilmRequest>
+   </soapenv:Body>
+</soapenv:Envelope>
+
+### 6. Reports Service (WebSockets)
+# To test WebSockets, use a browser or tool like 'wscat' or a simple JS client:
+# URL: ws://localhost:8080/reports-ws?token={{token}}
+# Send message: "get-sales"

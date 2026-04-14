@@ -1,0 +1,33 @@
+image: maven:3.9-eclipse-temurin-17
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  DB_URL: "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL"
+  DB_USERNAME: "sa"
+  DB_PASSWORD: ""
+  JWT_SECRET: "SakilaSecretKeyForJWTAuthSystemMicroservicesProfessionalCode2026"
+  JWT_EXPIRATION: "86400000"
+  EUREKA_SERVER: "http://localhost:8761/eureka/"
+
+cache:
+  paths:
+    - .m2/repository
+
+stages:
+  - build
+  - test
+
+build_job:
+  stage: build
+  script:
+    - mvn clean compile
+
+test_job:
+  stage: test
+  script:
+    - mvn test
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - "**/target/surefire-reports/*.xml"

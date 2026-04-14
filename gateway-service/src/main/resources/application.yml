@@ -1,0 +1,53 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      default-filters:
+        - name: AuthenticationFilter
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/auth/**
+        - id: business-service
+          uri: lb://business-service
+          predicates:
+            - Path=/business/**
+        - id: customer-service
+          uri: lb://customer-service
+          predicates:
+            - Path=/customer/**
+        - id: inventory-service
+          uri: lb://inventory-service
+          predicates:
+            - Path=/inventory/**
+        - id: reports-service
+          uri: lb:ws://reports-service
+          predicates:
+            - Path=/reports-ws/**
+
+jwt:
+  secret: ${JWT_SECRET:SakilaSecretKeyForJWTAuthSystemMicroservicesProfessionalCode2026}
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka/}
+
+springdoc:
+  swagger-ui:
+    urls:
+      - name: Auth Service
+        url: /auth/v3/api-docs
+      - name: Customer Service
+        url: /customer/v3/api-docs
+      - name: Business Service
+        url: /business/v3/api-docs
+      - name: Inventory Service
+        url: /inventory/v3/api-docs
+
+

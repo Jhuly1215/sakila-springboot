@@ -1,0 +1,19 @@
+type Query {
+    allStores: [Store]
+    storeById(id: ID!): Store
+}
+
+type Store {
+    id: ID!
+    managerStaffId: Int
+    addressId: Int
+}
+
+type Staff {
+    id: ID!
+    firstName: String
+    lastName: String
+    email: String
+    username: String
+    active: Boolean
+}
