@@ -34,13 +34,17 @@ public class AuthServiceIntegrationTest {
     @BeforeEach
     void setUp() {
         staffRepository.deleteAll();
+
         Staff staff = new Staff();
         staff.setFirstName("Test");
         staff.setLastName("User");
+        staff.setAddressId((short) 1);
+        staff.setStoreId((byte) 1);
         staff.setUsername("testuser");
         staff.setPassword(passwordEncoder.encode("password"));
         staff.setEmail("test@test.com");
         staff.setActive(true);
+
         staffRepository.save(staff);
     }
 

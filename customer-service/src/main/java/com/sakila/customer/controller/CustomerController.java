@@ -20,7 +20,7 @@ public class CustomerController {
     }
 
     @GetMapping("/{id}")
-    public Customer getCustomerById(@PathVariable Integer id) {
+    public Customer getCustomerById(@PathVariable Short id) {
         return customerRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found"));
     }
 }

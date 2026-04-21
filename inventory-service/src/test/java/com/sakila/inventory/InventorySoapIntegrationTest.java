@@ -36,7 +36,7 @@ public class InventorySoapIntegrationTest {
         Film film = new Film();
         film.setTitle("Test Film");
         film.setDescription("Description");
-        film.setReleaseYear(2026);
+        film.setReleaseYear(2024);
         film.setRentalRate(new BigDecimal("4.99"));
         film.setReplacementCost(new BigDecimal("19.99"));
         filmRepository.save(film);
@@ -44,21 +44,21 @@ public class InventorySoapIntegrationTest {
 
     @Test
     void testGetFilmSoap() throws Exception {
-        Integer id = filmRepository.findAll().get(0).getId();
+        Short id = filmRepository.findAll().get(0).getId();
         Source requestPayload = new StringSource(
                 "<getFilmRequest xmlns=\"http://sakila.com/soap\">" +
-                "<id>" + id + "</id>" +
-                "</getFilmRequest>");
+                        "<id>" + id + "</id>" +
+                        "</getFilmRequest>");
 
         Source responsePayload = new StringSource(
                 "<getFilmResponse xmlns=\"http://sakila.com/soap\">" +
-                "<film>" +
-                "<id>" + id + "</id>" +
-                "<title>Test Film</title>" +
-                "<description>Description</description>" +
-                "<releaseYear>2026</releaseYear>" +
-                "</film>" +
-                "</getFilmResponse>");
+                        "<film>" +
+                        "<id>" + id + "</id>" +
+                        "<title>Test Film</title>" +
+                        "<description>Description</description>" +
+                        "<releaseYear>2026</releaseYear>" +
+                        "</film>" +
+                        "</getFilmResponse>");
 
         mockClient.sendRequest(withPayload(requestPayload))
                 .andExpect(payload(responsePayload));

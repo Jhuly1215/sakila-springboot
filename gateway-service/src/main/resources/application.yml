@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8090
 
 spring:
   application:
@@ -13,18 +13,22 @@ spring:
           uri: lb://auth-service
           predicates:
             - Path=/auth/**
-        - id: business-service
-          uri: lb://business-service
-          predicates:
-            - Path=/business/**
+
         - id: customer-service
           uri: lb://customer-service
           predicates:
             - Path=/customer/**
+
+        - id: business-service
+          uri: lb://business-service
+          predicates:
+            - Path=/business/**
+
         - id: inventory-service
           uri: lb://inventory-service
           predicates:
             - Path=/inventory/**
+
         - id: reports-service
           uri: lb:ws://reports-service
           predicates:
@@ -40,6 +44,8 @@ eureka:
 
 springdoc:
   swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
     urls:
       - name: Auth Service
         url: /auth/v3/api-docs
@@ -49,5 +55,5 @@ springdoc:
         url: /business/v3/api-docs
       - name: Inventory Service
         url: /inventory/v3/api-docs
-
-
+      - name: Reports Service
+        url: /reports/v3/api-docs

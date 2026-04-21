@@ -1,4 +1,4 @@
-package com.sakila.customer.entity;
+package com.sakila.inventory.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,29 +11,20 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "rental")
+@Table(name = "inventory")
 @Data
-public class Rental {
+public class Inventory {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "rental_id", nullable = false)
+    @Column(name = "inventory_id", nullable = false)
     private Integer id;
 
-    @Column(name = "rental_date", nullable = false)
-    private LocalDateTime rentalDate;
+    @Column(name = "film_id", nullable = false)
+    private Short filmId;
 
-    @Column(name = "inventory_id", nullable = false)
-    private Integer inventoryId;
-
-    @Column(name = "customer_id", nullable = false)
-    private Short customerId;
-
-    @Column(name = "return_date")
-    private LocalDateTime returnDate;
-
-    @Column(name = "staff_id", nullable = false)
-    private Byte staffId;
+    @Column(name = "store_id", nullable = false)
+    private Byte storeId;
 
     @Column(name = "last_update", insertable = false, updatable = false)
     private LocalDateTime lastUpdate;

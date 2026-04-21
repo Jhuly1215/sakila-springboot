@@ -24,9 +24,11 @@ public class BusinessControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         storeRepository.deleteAll();
+
         Store store = new Store();
-        store.setManagerStaffId(1);
-        store.setAddressId(1);
+        store.setManagerStaffId((byte) 1);
+        store.setAddressId((short) 1);
+
         storeRepository.save(store);
     }
 

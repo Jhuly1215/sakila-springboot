@@ -10,6 +10,7 @@ import org.springframework.ws.server.endpoint.annotation.ResponsePayload;
 
 @Endpoint
 public class InventoryEndpoint {
+
     private static final String NAMESPACE_URI = "http://sakila.com/soap";
 
     @Autowired
@@ -18,16 +19,18 @@ public class InventoryEndpoint {
     @PayloadRoot(namespace = NAMESPACE_URI, localPart = "getFilmRequest")
     @ResponsePayload
     public GetFilmResponse getFilm(@RequestPayload GetFilmRequest request) {
-        Film filmEntity = filmRepository.findById(request.getId())
-                .orElseThrow(() -> new RuntimeException("Film not found"));
+        Film filmEntity = filmRepository.findById((short) request.getId())
+                .orElseThrow(() -> new RuntimeException("Film not found with id: " + request.getId()));
 
         GetFilmResponse response = new GetFilmResponse();
         FilmSoap filmSoap = new FilmSoap();
-        filmSoap.setId(filmEntity.getId());
+
+        filmSoap.setId(filmEntity.getId().intValue());
         filmSoap.setTitle(filmEntity.getTitle());
         filmSoap.setDescription(filmEntity.getDescription());
-        filmSoap.setReleaseYear(filmEntity.getReleaseYear() != null ? filmEntity.getReleaseYear() : 0);
-        
+        filmSoap.setReleaseYear(
+                filmEntity.getReleaseYear() != null ? filmEntity.getReleaseYear().intValue() : 0);
+
         response.setFilm(filmSoap);
         return response;
     }

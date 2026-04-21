@@ -21,7 +21,7 @@ public class BusinessController {
     }
 
     @QueryMapping
-    public Store storeById(@Argument Integer id) {
+    public Store storeById(@Argument Byte id) {
         return storeRepository.findById(id).orElseThrow(() -> new RuntimeException("Store not found"));
     }
 }

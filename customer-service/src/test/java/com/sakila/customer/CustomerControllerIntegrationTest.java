@@ -31,12 +31,16 @@ public class CustomerControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         customerRepository.deleteAll();
+
         Customer customer = new Customer();
+        customer.setStoreId((byte) 1);
+        customer.setAddressId((short) 5);
         customer.setFirstName("John");
         customer.setLastName("Doe");
         customer.setEmail("john.doe@test.com");
         customer.setActive(true);
         customer.setCreateDate(LocalDateTime.now());
+
         customerRepository.save(customer);
     }
 

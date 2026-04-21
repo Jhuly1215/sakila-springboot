@@ -24,59 +24,70 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
     @Value("${jwt.secret}")
     private String secret;
 
-    private final List<String> openEndpoints = List.of(
-            "/auth/login", 
-            "/auth/register", 
-            "/eureka",
-            "/v3/api-docs",
+    private final List<String> openPrefixes = List.of(
+            "/auth/login",
+            "/auth/register",
             "/swagger-ui",
-            "/webjars"
-    );
+            "/webjars",
+            "/v3/api-docs");
 
     public AuthenticationFilter() {
         super(Config.class);
     }
 
-    public static class Config {}
+    public static class Config {
+    }
 
     @Override
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             ServerHttpRequest request = exchange.getRequest();
+            String path = request.getURI().getPath();
 
-            if (openEndpoints.stream().noneMatch(uri -> request.getURI().getPath().contains(uri))) {
-                if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                    return onError(exchange, "No Authorization Header", HttpStatus.UNAUTHORIZED);
-                }
+            boolean isOpenEndpoint = "/swagger-ui.html".equals(path) ||
+                    openPrefixes.stream().anyMatch(path::startsWith) ||
+                    path.contains("/v3/api-docs");
 
-                String authHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
-                if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                    return onError(exchange, "Invalid Authorization Header", HttpStatus.UNAUTHORIZED);
-                }
-
-                String token = authHeader.substring(7);
-                try {
-                    SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-                    Claims claims = Jwts.parserBuilder()
-                            .setSigningKey(key)
-                            .build()
-                            .parseClaimsJws(token)
-                            .getBody();
-                    
-                    // Add user info to headers for downstream services
-                    exchange.getRequest().mutate()
-                            .header("loggedInUser", claims.getSubject())
-                            .build();
-
-                } catch (Exception e) {
-                    return onError(exchange, "Invalid Token", HttpStatus.UNAUTHORIZED);
-                }
+            if (isOpenEndpoint) {
+                return chain.filter(exchange);
             }
-            return chain.filter(exchange);
+
+            String token = null;
+
+            if (request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+                String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+                if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                    token = authHeader.substring(7);
+                }
+            } else if (request.getQueryParams().containsKey("token")) {
+                token = request.getQueryParams().getFirst("token");
+            }
+
+            if (token == null) {
+                return onError(exchange, HttpStatus.UNAUTHORIZED);
+            }
+
+            try {
+                SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+                Claims claims = Jwts.parserBuilder()
+                        .setSigningKey(key)
+                        .build()
+                        .parseClaimsJws(token)
+                        .getBody();
+
+                ServerHttpRequest mutatedRequest = request.mutate()
+                        .header("loggedInUser", claims.getSubject())
+                        .build();
+
+                return chain.filter(exchange.mutate().request(mutatedRequest).build());
+
+            } catch (Exception e) {
+                return onError(exchange, HttpStatus.UNAUTHORIZED);
+            }
         };
     }
 
-    private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus) {
+    private Mono<Void> onError(ServerWebExchange exchange, HttpStatus httpStatus) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(httpStatus);
         return response.setComplete();

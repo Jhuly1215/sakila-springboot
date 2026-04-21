@@ -4,12 +4,14 @@ POST http://localhost:8080/auth/register
 Content-Type: application/json
 
 {
-    "firstName": "John",
-    "lastName": "Doe",
-    "username": "johndoe",
-    "password": "password123",
-    "email": "john.doe@sakila.com",
-    "active": true
+  "firstName": "John",
+  "lastName": "Doe",
+  "addressId": 5,
+  "email": "john.doe@sakila.com",
+  "storeId": 1,
+  "active": true,
+  "username": "johndoe",
+  "password": "password123"
 }
 
 ### 2. Login to get JWT
