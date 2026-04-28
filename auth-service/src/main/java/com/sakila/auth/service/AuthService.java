@@ -34,8 +34,13 @@ public class AuthService {
         staff.setUsername(request.getUsername());
         staff.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        repository.save(staff);
-        return "User registered successfully";
+        try {
+            repository.save(staff);
+            return "User registered successfully";
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("DB Error: " + e.getMessage() + (e.getCause() != null ? " | Cause: " + e.getCause().getMessage() : ""));
+        }
     }
 
     public String generateToken(String username) {
