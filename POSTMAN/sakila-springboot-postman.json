@@ -1,0 +1,748 @@
+{
+  "info": {
+    "_postman_id": "e65b5c17-7c81-44a0-affa-e948f6d8eef2",
+    "name": "Sakila Spring Boot - Todos menos SOAP (REST + GraphQL + WebSocket)",
+    "description": "Colección para probar el proyecto sakila-springboot sin SOAP. Incluye REST/JWT, Customer REST, Business GraphQL y Reports WebSocket. No depende de environment: usa variables de colección y URLs directas.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "jwt",
+      "value": ""
+    },
+    {
+      "key": "gatewayBase",
+      "value": "http://localhost:8090"
+    },
+    {
+      "key": "authBase",
+      "value": "http://localhost:8091"
+    },
+    {
+      "key": "customerBase",
+      "value": "http://localhost:8093"
+    },
+    {
+      "key": "businessBase",
+      "value": "http://localhost:8094"
+    },
+    {
+      "key": "reportsWsGateway",
+      "value": "ws://localhost:8090/reports-ws"
+    },
+    {
+      "key": "reportsWsDirect",
+      "value": "ws://localhost:8095/reports-ws"
+    },
+    {
+      "key": "testUsername",
+      "value": "postman_user"
+    },
+    {
+      "key": "testPassword",
+      "value": "password123"
+    },
+    {
+      "key": "testEmail",
+      "value": "postman_user@sakila.com"
+    },
+    {
+      "key": "customerId",
+      "value": "1"
+    },
+    {
+      "key": "storeId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Diagnóstico / documentación",
+      "item": [
+        {
+          "name": "Eureka Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "http://localhost:8761",
+            "description": "Valida que discovery-service esté arriba."
+          }
+        },
+        {
+          "name": "Swagger UI Gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayBase}}/swagger-ui.html",
+            "description": "Swagger del Gateway."
+          }
+        },
+        {
+          "name": "Auth OpenAPI por Gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayBase}}/auth/v3/api-docs",
+            "description": "OpenAPI del Auth Service vía Gateway."
+          }
+        },
+        {
+          "name": "Customer OpenAPI por Gateway",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayBase}}/customer/v3/api-docs",
+            "description": "OpenAPI del Customer Service vía Gateway."
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Auth JWT REST",
+      "description": "Ejecuta Register y luego Login. El login guarda el JWT en la variable de colección {{jwt}}.",
+      "item": [
+        {
+          "name": "Register Staff - Gateway",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{gatewayBase}}/auth/register",
+            "description": "Genera un usuario único y lo registra por Gateway.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Tester\",\n  \"addressId\": 5,\n  \"email\": \"{{testEmail}}\",\n  \"storeId\": 1,\n  \"active\": true,\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = Date.now();",
+                  "pm.collectionVariables.set(\"testUsername\", \"postman_\" + suffix);",
+                  "pm.collectionVariables.set(\"testEmail\", \"postman_\" + suffix + \"@sakila.com\");",
+                  "pm.collectionVariables.set(\"testPassword\", \"password123\");",
+                  "console.log(\"Usuario de prueba generado:\", pm.collectionVariables.get(\"testUsername\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Respuesta HTTP válida\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Gateway (guarda JWT)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{gatewayBase}}/auth/login",
+            "description": "Inicia sesión por Gateway y guarda el JWT como variable de colección.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login respondió 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let token = \"\";",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  if (typeof data === \"string\") {",
+                  "    token = data;",
+                  "  } else {",
+                  "    token = data.token || data.jwt || data.accessToken || data.access_token || \"\";",
+                  "  }",
+                  "} catch (e) {",
+                  "  token = pm.response.text();",
+                  "}",
+                  "",
+                  "token = String(token || \"\").trim().replace(/^\"|\"$/g, \"\");",
+                  "",
+                  "pm.test(\"JWT recibido\", function () {",
+                  "  pm.expect(token.length).to.be.above(20);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", token);",
+                  "console.log(\"JWT guardado en variable de colección jwt:\", token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register Staff - Direct Auth Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authBase}}/auth/register",
+            "description": "Genera un usuario único y lo registra directo contra auth-service.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Tester\",\n  \"addressId\": 5,\n  \"email\": \"{{testEmail}}\",\n  \"storeId\": 1,\n  \"active\": true,\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = Date.now();",
+                  "pm.collectionVariables.set(\"testUsername\", \"postman_\" + suffix);",
+                  "pm.collectionVariables.set(\"testEmail\", \"postman_\" + suffix + \"@sakila.com\");",
+                  "pm.collectionVariables.set(\"testPassword\", \"password123\");",
+                  "console.log(\"Usuario de prueba generado:\", pm.collectionVariables.get(\"testUsername\"));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Respuesta HTTP válida\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - Direct Auth Service (guarda JWT)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{authBase}}/auth/login",
+            "description": "Inicia sesión directo contra auth-service y guarda el JWT.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login respondió 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "let token = \"\";",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  if (typeof data === \"string\") {",
+                  "    token = data;",
+                  "  } else {",
+                  "    token = data.token || data.jwt || data.accessToken || data.access_token || \"\";",
+                  "  }",
+                  "} catch (e) {",
+                  "  token = pm.response.text();",
+                  "}",
+                  "",
+                  "token = String(token || \"\").trim().replace(/^\"|\"$/g, \"\");",
+                  "",
+                  "pm.test(\"JWT recibido\", function () {",
+                  "  pm.expect(token.length).to.be.above(20);",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"jwt\", token);",
+                  "console.log(\"JWT guardado en variable de colección jwt:\", token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Customer REST",
+      "description": "Endpoints REST del customer-service. Ejecutar después de login para tener {{jwt}}.",
+      "item": [
+        {
+          "name": "GET Customers - Gateway",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": "{{gatewayBase}}/customer/all",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Respuesta HTTP válida\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Customer by ID - Gateway",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": "{{gatewayBase}}/customer/{{customerId}}",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Respuesta HTTP válida\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Customers - Direct Customer Service",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": "{{customerBase}}/customer/all",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Respuesta HTTP válida\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Customer by ID - Direct Customer Service",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": "{{customerBase}}/customer/{{customerId}}",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Respuesta HTTP válida\", function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Business GraphQL",
+      "description": "Estos requests están configurados con Body > GraphQL, no como JSON raw.",
+      "item": [
+        {
+          "name": "GraphQL allStores - Gateway",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": "{{gatewayBase}}/business/graphql",
+            "description": "Consulta GraphQL por Gateway.",
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query AllStores {\n  allStores {\n    id\n    managerStaffId\n    addressId\n  }\n}",
+                "variables": "{}"
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Respuesta GraphQL válida\", function () {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data).to.have.property(\"data\");",
+                  "  pm.expect(data.errors, JSON.stringify(data.errors)).to.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GraphQL storeById - Gateway",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": "{{gatewayBase}}/business/graphql",
+            "description": "Consulta GraphQL por Gateway con variable id.",
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query StoreById($id: ID!) {\n  storeById(id: $id) {\n    id\n    managerStaffId\n    addressId\n  }\n}",
+                "variables": "{\n  \"id\": \"1\"\n}"
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Respuesta GraphQL válida\", function () {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data).to.have.property(\"data\");",
+                  "  pm.expect(data.errors, JSON.stringify(data.errors)).to.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GraphQL allStores - Direct Business Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": "{{businessBase}}/business/graphql",
+            "description": "Consulta GraphQL directa al business-service.",
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query AllStores {\n  allStores {\n    id\n    managerStaffId\n    addressId\n  }\n}",
+                "variables": "{}"
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Respuesta GraphQL válida\", function () {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data).to.have.property(\"data\");",
+                  "  pm.expect(data.errors, JSON.stringify(data.errors)).to.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GraphQL storeById - Direct Business Service",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt}}"
+              }
+            ],
+            "url": "{{businessBase}}/business/graphql",
+            "description": "Consulta GraphQL directa con variable id.",
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query StoreById($id: ID!) {\n  storeById(id: $id) {\n    id\n    managerStaffId\n    addressId\n  }\n}",
+                "variables": "{\n  \"id\": \"1\"\n}"
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Respuesta GraphQL válida\", function () {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data).to.have.property(\"data\");",
+                  "  pm.expect(data.errors, JSON.stringify(data.errors)).to.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GraphiQL en navegador",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{businessBase}}/business/graphiql",
+            "description": "Abre esta URL en navegador si prefieres probar GraphQL con GraphiQL."
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Reports WebSocket",
+      "description": "Postman no ejecuta WebSocket en Collection Runner. Abre el request y presiona Connect. Mensaje de prueba: get-sales",
+      "item": [
+        {
+          "name": "WS Reports - Gateway con token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{reportsWsGateway}}?token={{jwt}}",
+            "description": "Conecta por Gateway. Después de conectar, envía el mensaje de texto: get-sales"
+          }
+        },
+        {
+          "name": "WS Reports - Direct Reports Service",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{reportsWsDirect}}",
+            "description": "Conecta directo al reports-service. Después de conectar, envía el mensaje de texto: get-sales"
+          }
+        },
+        {
+          "name": "Mensaje que debes enviar manualmente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayBase}}",
+            "description": "En el request WebSocket, envía manualmente este texto exacto: get-sales"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Seguridad / pruebas negativas",
+      "item": [
+        {
+          "name": "Customer sin token - Gateway debe fallar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayBase}}/customer/all",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Debe rechazar sin token\", function () {",
+                  "  pm.expect([401, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer sin token - Direct puede depender de configuración",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{customerBase}}/customer/all",
+            "description": "Si el servicio directo no tiene filtro de seguridad, podría devolver 200."
+          }
+        },
+        {
+          "name": "GraphQL sin token - Gateway debe fallar si el Gateway filtra",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{gatewayBase}}/business/graphql",
+            "description": "Puede fallar con 401/403 si el Gateway valida JWT.",
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query AllStores {\n  allStores {\n    id\n    managerStaffId\n    addressId\n  }\n}",
+                "variables": "{}"
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Respuesta GraphQL válida\", function () {",
+                  "  const data = pm.response.json();",
+                  "  pm.expect(data).to.have.property(\"data\");",
+                  "  pm.expect(data.errors, JSON.stringify(data.errors)).to.be.undefined;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "06 - gRPC",
+      "description": "En el repositorio actual no hay gRPC implementado. No hay .proto real ni puerto gRPC. Se incluye un .proto de plantilla en el ZIP, pero no funcionará contra el proyecto actual hasta implementar un servidor gRPC.",
+      "item": [
+        {
+          "name": "Nota - gRPC no existe en el repo actual",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{gatewayBase}}",
+            "description": "Para probar gRPC en Postman necesitas New > gRPC, importar un .proto real y colocar host:puerto gRPC. Este proyecto expone REST, GraphQL y WebSocket; SOAP queda fuera de esta colección porque se probará con SoapUI."
+          }
+        }
+      ]
+    }
+  ]
+}
