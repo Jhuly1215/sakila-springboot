@@ -37,6 +37,8 @@ public class InventorySoapIntegrationTest {
         film.setTitle("Test Film");
         film.setDescription("Description");
         film.setReleaseYear(2024);
+        film.setLanguageId((byte) 1);
+        film.setRentalDuration((byte) 3);
         film.setRentalRate(new BigDecimal("4.99"));
         film.setReplacementCost(new BigDecimal("19.99"));
         filmRepository.save(film);
@@ -56,7 +58,7 @@ public class InventorySoapIntegrationTest {
                         "<id>" + id + "</id>" +
                         "<title>Test Film</title>" +
                         "<description>Description</description>" +
-                        "<releaseYear>2026</releaseYear>" +
+                        "<releaseYear>2024</releaseYear>" +
                         "</film>" +
                         "</getFilmResponse>");
 

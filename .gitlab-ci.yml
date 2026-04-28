@@ -1,4 +1,4 @@
-image: maven:3.9-eclipse-temurin-17
+image: maven:3.9-eclipse-temurin-21
 
 variables:
   MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
@@ -20,12 +20,12 @@ stages:
 build_job:
   stage: build
   script:
-    - mvn clean compile
+    - mvn clean compile -DskipTests
 
 test_job:
   stage: test
   script:
-    - mvn test
+    - mvn test -DfailIfNoTests=false
   artifacts:
     when: always
     reports:

@@ -1,0 +1,13 @@
+# En tests, se excluyen las auto-configuraciones de Eureka Server y Client
+# para que el contexto de Spring no necesite la infraestructura de Netflix.
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.netflix.eureka.server.EurekaServerAutoConfiguration
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
