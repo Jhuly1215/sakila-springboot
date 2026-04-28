@@ -29,7 +29,9 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             "/auth/register",
             "/swagger-ui",
             "/webjars",
-            "/v3/api-docs");
+            "/v3/api-docs",
+            "/auth/v3/api-docs",
+            "/customer/v3/api-docs");
 
     public AuthenticationFilter() {
         super(Config.class);
@@ -44,26 +46,13 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getURI().getPath();
 
-            boolean isOpenEndpoint = "/swagger-ui.html".equals(path) ||
-                    openPrefixes.stream().anyMatch(path::startsWith) ||
-                    path.contains("/v3/api-docs");
-
-            if (isOpenEndpoint) {
+            if (isOpenEndpoint(path)) {
                 return chain.filter(exchange);
             }
 
-            String token = null;
+            String token = extractToken(request);
 
-            if (request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    token = authHeader.substring(7);
-                }
-            } else if (request.getQueryParams().containsKey("token")) {
-                token = request.getQueryParams().getFirst("token");
-            }
-
-            if (token == null) {
+            if (token == null || token.isBlank()) {
                 return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
 
@@ -85,6 +74,30 @@ public class AuthenticationFilter extends AbstractGatewayFilterFactory<Authentic
                 return onError(exchange, HttpStatus.UNAUTHORIZED);
             }
         };
+    }
+
+    private boolean isOpenEndpoint(String path) {
+        if (path == null || path.isBlank()) {
+            return false;
+        }
+
+        return "/swagger-ui.html".equals(path)
+                || path.startsWith("/swagger-ui/")
+                || path.startsWith("/webjars/")
+                || path.equals("/v3/api-docs")
+                || path.startsWith("/v3/api-docs/")
+                || path.contains("/v3/api-docs")
+                || openPrefixes.stream().anyMatch(path::startsWith);
+    }
+
+    private String extractToken(ServerHttpRequest request) {
+        String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+
+        return request.getQueryParams().getFirst("token");
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, HttpStatus httpStatus) {

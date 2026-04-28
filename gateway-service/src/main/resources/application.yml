@@ -41,6 +41,10 @@ eureka:
   client:
     serviceUrl:
       defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+    ip-address: 127.0.0.1
 
 springdoc:
   swagger-ui:
@@ -51,9 +55,3 @@ springdoc:
         url: /auth/v3/api-docs
       - name: Customer Service
         url: /customer/v3/api-docs
-      - name: Business Service
-        url: /business/v3/api-docs
-      - name: Inventory Service
-        url: /inventory/v3/api-docs
-      - name: Reports Service
-        url: /reports/v3/api-docs
